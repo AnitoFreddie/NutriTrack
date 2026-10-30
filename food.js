@@ -1,5 +1,7 @@
 
 const API = "api.php";
+const FOOD_URL = "./foods.json";
+
 const REF = { pro: 50, carb: 275, fat: 78 };
 const $ = id => document.getElementById(id);
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -12,7 +14,7 @@ let db = { goal: 2000 };
 try {
     const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
     if (saved.goal) db.goal = saved.goal;
-} catch (e) { }
+} catch (e) {}
 
 const saveGoal = () => {
     localStorage.setItem(KEY, JSON.stringify({ goal: db.goal }));
@@ -26,6 +28,7 @@ const r1 = n => Math.round(Number(n) * 10) / 10;
 
 let current = iso(new Date());
 
+// API REQUEST
 async function request(action, method = "GET", data = null, extra = "") {
     const options = { method, headers: {} };
 
@@ -48,16 +51,55 @@ async function request(action, method = "GET", data = null, extra = "") {
     return result;
 }
 
+// ERROR MESSAGE
 function showError(message) {
     $("preview").textContent = message;
 }
 
+// FIND FOOD
 function findFood(name) {
     return foods.find(
         f => f.name.toLowerCase() === name.trim().toLowerCase()
     );
 }
 
+// LOAD FOOD FROM JSON
+async function loadFoods() {
+    try {
+        const response = await fetch(FOOD_URL);
+
+        if (!response.ok) {
+            throw new Error("foods.json not found: " + response.status);
+        }
+
+        const result = await response.json();
+
+        foods = Array.isArray(result)
+            ? result
+            : (result.foods || []);
+
+        foods = foods.filter(f =>
+            f.name &&
+            Number.isFinite(Number(f.cal))
+        );
+
+        fillList();
+
+        console.log("Foods loaded:", foods.length);
+
+        if (foods.length === 0) {
+            showError("No food data found in foods.json.");
+        }
+
+    } catch (error) {
+        console.error("Food loading error:", error);
+        foods = [];
+        fillList();
+        showError("Unable to load foods.json. Check your GitHub files.");
+    }
+}
+
+// CALCULATE TOTALS
 function totals(entries) {
     const t = { cal: 0, pro: 0, carb: 0, fat: 0 };
 
@@ -70,6 +112,7 @@ function totals(entries) {
     return t;
 }
 
+// DAILY FEEDBACK
 function feedbackFor(t, entries) {
     const g = Number(db.goal);
     const out = [];
@@ -110,6 +153,7 @@ function feedbackFor(t, entries) {
     return out;
 }
 
+// RENDER DASHBOARD
 function render() {
     const entries = logs;
     const t = totals(entries);
@@ -161,6 +205,7 @@ function render() {
     renderWeek();
 }
 
+// RENDER MEAL LOG
 function renderLog(entries) {
     const box = $("mealLog");
     box.textContent = "";
@@ -234,6 +279,7 @@ function renderLog(entries) {
     });
 }
 
+// WEEKLY CHART
 async function renderWeek() {
     const plot = $("weekPlot");
     plot.textContent = "";
@@ -274,6 +320,7 @@ async function renderWeek() {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "bar" + (date === current ? " sel" : "");
+
         button.setAttribute(
             "aria-label",
             date + ": " + Math.round(values[i]) + " kcal"
@@ -302,6 +349,7 @@ async function renderWeek() {
     plot.appendChild(line);
 }
 
+// FILL FOOD SUGGESTIONS
 function fillList() {
     const dl = $("foodList");
     dl.textContent = "";
@@ -309,11 +357,12 @@ function fillList() {
     foods.forEach(f => {
         const option = document.createElement("option");
         option.value = f.name;
-        option.label = f.serving;
+        option.label = f.serving || "1 serving";
         dl.appendChild(option);
     });
 }
 
+// FOOD PREVIEW
 function preview() {
     const food = findFood($("foodSearch").value);
     const servings = parseFloat($("servings").value) || 0;
@@ -327,12 +376,7 @@ function preview() {
         : "";
 }
 
-async function loadFoods() {
-    const result = await request("get_foods");
-    foods = result.foods || [];
-    fillList();
-}
-
+// LOAD MEALS
 async function loadMeals() {
     try {
         const result = await request(
@@ -344,11 +388,15 @@ async function loadMeals() {
 
         logs = result.meals || [];
         render();
+
     } catch (error) {
+        logs = [];
+        render();
         showError("Unable to load meals. Check your API connection.");
     }
 }
 
+// ADD MEAL
 $("logForm").onsubmit = async e => {
     e.preventDefault();
 
@@ -381,6 +429,7 @@ $("logForm").onsubmit = async e => {
         showError("");
 
         await loadMeals();
+
     } catch (error) {
         showError("Unable to save meal: " + error.message);
     } finally {
@@ -388,6 +437,7 @@ $("logForm").onsubmit = async e => {
     }
 };
 
+// ADD CUSTOM FOOD
 $("customForm").onsubmit = async e => {
     e.preventDefault();
 
@@ -413,11 +463,13 @@ $("customForm").onsubmit = async e => {
 
         e.target.reset();
         showError("Food saved to the database. You can now search for it.");
+
     } catch (error) {
         showError("Unable to save food: " + error.message);
     }
 };
 
+// CALORIE GOAL
 $("goalInput").onchange = () => {
     const value = Number($("goalInput").value);
 
@@ -429,6 +481,7 @@ $("goalInput").onchange = () => {
     render();
 };
 
+// DATE SELECTOR
 $("viewDate").onchange = async () => {
     if ($("viewDate").value) {
         current = $("viewDate").value;
@@ -436,22 +489,17 @@ $("viewDate").onchange = async () => {
     }
 };
 
+// INPUT EVENTS
 $("foodSearch").oninput = preview;
 $("servings").oninput = preview;
 
+// INITIALIZE
 async function init() {
     $("mealLog").textContent = "Loading meals...";
     $("foodList").textContent = "";
 
-    try {
-        await loadFoods();
-        await loadMeals();
-    } catch (error) {
-        showError(
-            "Cannot connect to the database. Check that Apache and MySQL are running."
-        );
-        $("mealLog").textContent = "Unable to load NutriTrack data.";
-    }
+    await loadFoods();
+    await loadMeals();
 }
 
 init();
