@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriTrack</title>
+    <link rel="stylesheet" href="food.css">
+</head>
+<body>
+
+    <header>
+        <div class="wrap bar-top">
+            <h1><img src="logo.png" alt="" class="logo" onerror="this.style.display='none'"> NutriTrack</h1>
+                <div>
+                    <label for="viewDate">Date</label>
+                    <input type="date" id="viewDate">
+                </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+
+        <section aria-labelledby="sumTitle">
+            <h2 id="sumTitle">Summary</h2>
+            <div class="goal">
+                <label for="goalInput">Daily calorie goal</label>
+                <input type="number" id="goalInput" min="500" max="10000" step="50"> kcal
+            </div>
+            <div class="meter" id="meter" role="progressbar" aria-label="Calories eaten compared with goal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="progressBar"></div>
+            </div>
+            <p class="goal-msg" id="goalMsg"></p>
+            <table class="totals">
+                <thead>
+                    <tr><th scope="col">Nutrient</th><th scope="col">Amount</th><th scope="col">Of daily reference</th></tr>
+                </thead>
+                <tbody>
+                    <tr><th scope="row">Calories</th><td><span id="calTotal">0</span> kcal</td><td id="calPct">0%</td></tr>
+                    <tr><th scope="row">Protein</th><td><span id="proTotal">0</span> g</td><td id="proPct">0%</td></tr>
+                    <tr><th scope="row">Carbohydrate</th><td><span id="carbTotal">0</span> g</td><td id="carbPct">0%</td></tr>
+                    <tr><th scope="row">Fat</th><td><span id="fatTotal">0</span> g</td><td id="fatPct">0%</td></tr>
+                </tbody>
+            </table>
+            <p class="note">Reference amounts: 50 g protein, 275 g carbohydrate, 78 g fat a day.</p>
+        </section>
+
+        <section aria-labelledby="fbTitle">
+            <h2 id="fbTitle">Today's feedback</h2>
+            <ul class="feedback" id="feedback" aria-live="polite"></ul>
+        </section>
+
+        <section aria-labelledby="addTitle">
+            <h2 id="addTitle">Add a meal</h2>
+            <form id="logForm" class="row-form">
+                <div class="field">
+                    <label for="mealType">Meal</label>
+                    <select id="mealType">
+                        <option>Breakfast</option>
+                        <option>Lunch</option>
+                        <option>Dinner</option>
+                        <option>Snack</option>
+                    </select>
+                </div>
+                <div class="field grow">
+                    <label for="foodSearch">Food</label>
+                    <input type="text" id="foodSearch" list="foodList" placeholder="Search a food, e.g. adobo" autocomplete="off" required>
+                    <datalist id="foodList"></datalist>
+                </div>
+                <div class="field small">
+                    <label for="servings">Servings</label>
+                    <input type="number" id="servings" min="0.1" max="20" step="0.1" value="1" required>
+                </div>
+                <button type="submit">Add meal</button>
+            </form>
+            <p id="preview" class="note" aria-live="polite"></p>
+        </section>
+
+        <section aria-labelledby="eatenTitle">
+            <h2 id="eatenTitle">Meals on <span id="dayName"></span></h2>
+            <div id="mealLog"></div>
+        </section>
+
+        <section aria-labelledby="weekTitle">
+            <h2 id="weekTitle">Last 7 days</h2>
+            <div class="plot" id="weekPlot"></div>
+            <p class="note">Select a bar to view that day. The dashed line is your goal.</p>
+        </section>
+
+        <details class="custom">
+            <summary>Add a food that isn’t in the list</summary>
+            <form id="customForm" class="grid-form">
+                <div class="field full"><label for="cName">Food name</label><input type="text" id="cName" required></div>
+                <div class="field full"><label for="cServing">Serving size</label><input type="text" id="cServing" placeholder="1 cup"></div>
+                <div class="field"><label for="cCal">Calories</label><input type="number" id="cCal" min="0" step="any" required></div>
+                <div class="field"><label for="cPro">Protein (g)</label><input type="number" id="cPro" min="0" step="any" required></div>
+                <div class="field"><label for="cCarb">Carbohydrate (g)</label><input type="number" id="cCarb" min="0" step="any" required></div>
+                <div class="field"><label for="cFat">Fat (g)</label><input type="number" id="cFat" min="0" step="any" required></div>
+                <button type="submit" class="full-btn">Save food</button>
+            </form>
+        </details>
+
+        <details class="guide" open>
+            <summary>How to record your food</summary>
+            <ol>
+                <li>Log right after you eat, so you don't forget.</li>
+                <li>Pick the meal, then search the food by its common name.</li>
+                <li>Check the serving size shown, then enter how many servings you ate. Half a cup of rice is 0.5.</li>
+                <li>Log everything: snacks, drinks, sauces, and cooking oil.</li>
+                <li>Mixed dishes count by the dish. Log each part separately if you can, such as rice and ulam.</li>
+                <li>If a food isn't listed, add it under "Add a food that isn't in the list" using its label.</li>
+                <li>Log every day, even on busy days. Consistent records give better feedback.</li>
+            </ol>
+        </details>
+
+    </main>
+
+    <script src="food.js"></script>
+</body>
+</html>
